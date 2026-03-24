@@ -3,9 +3,10 @@ scipy
 scikit-image
 matplotlib
 seaborn
-cellpose
-torch
-bm3d
+pandas
 tifffile
 imageio
-pandas
+torch
+torchvision
+cellpose>=4.0
+bm3d
