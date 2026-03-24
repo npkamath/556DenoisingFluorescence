@@ -8,5 +8,5 @@ tifffile
 imageio
 torch
 torchvision
-cellpose>=4.0
+cellpose>=3.0,<4.0
 bm3d
