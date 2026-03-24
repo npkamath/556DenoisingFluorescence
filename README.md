@@ -12,7 +12,7 @@
 pip install -r requirements.txt
 ```
 
-### Option B: conda/mamba + pip (recommended)
+### Option B: conda/mamba + pip (I use mamba personally, but pip should be simpler)
 
 ```bash
 mamba create -n 556Proj python=3.10 -y
