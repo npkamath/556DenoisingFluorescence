@@ -125,6 +125,35 @@ python src/evaluate.py --pred_dir results/pred_masks/noisy --method_name noisy
 
 ---
 
+
+## Extension 2: Learned PnP Denoiser
+
+Extension 2 replaces BM3D's hand-crafted prior with a neural denoiser trained
+in the Anscombe VST domain and plugged into the same HQS framework.
+
+### Training
+
+```bash
+# 1. Generate VST-domain training pairs from the cyto2 training set
+python src/data_prep_train.py
+
+# 2. Train the denoiser (checkpoints saved every 25 epochs)
+python src/cellpose_trainer.py --n_epochs 100
+```
+
+### Inference and evaluation
+
+```bash
+# Denoise + segment all 68 test images with the epoch-75 checkpoint
+python src/pipeline_main.py \
+    --denoiser_path models/pnp_denoiser/cellpose_vst_denoiser_epoch75.pth \
+    --metrics_csv results/ap_scores/pnp_hqs_epoch75.csv
+
+# Compare against other methods via bootstrap CI
+python src/bootstrap_ci.py --baseline noisy --method pnp_hqs_epoch75 bm3d purelet
+python src/scatter_delta_plots.py --methods pnp_hqs_epoch75 bm3d purelet cellpose3
+```
+
 ## Source Files
 
 | File | Purpose |
@@ -132,3 +161,9 @@ python src/evaluate.py --pred_dir results/pred_masks/noisy --method_name noisy
 | `src/data_prep.py` | Generates clean, noisy, and mask datasets from raw PNGs. Produces two noise variants: **Poisson-only** (preserves raw Poisson statistics for classical filters) and **cellpose3** (blur + downsample + Poisson, matches the paper). Per-image noise scale (pscale) is logged to CSV. |
 | `src/segment.py` | Runs the frozen Cellpose `cyto2` model on a directory of `.npy` images. Outputs predicted instance masks and per-image timing. Uses `channels=[2, 1]` (Green=cytoplasm, Red=nucleus). |
 | `src/evaluate.py` | Computes AP@0.5 (and AP at IoU 0.5–0.95) by comparing predicted masks against ground truth. Outputs per-image CSV and summary statistics. Use `--all` to evaluate every method subdirectory at once. |
+| `src/denoise_purelet_swt.py` | PURE-LET denoising via Stationary Wavelet Transform (SWT). Implements the PURE-LET algorithm (Poisson Unbiased Risk Estimator – Linear Expansion of Thresholds) using an undecimated, shift-invariant SWT rather than a standard DWT. For each non-empty channel, converts pixel values to photon counts via pscale, decomposes with `pywt.swt2` (sym4, 4 levels), and applies an interscale thresholding scheme: coefficients are modulated with a sigmoidal gate function jointly with an interscale predictor derived from same-scale LL subband gradients (horizontal → `grad_h(LL)`, vertical → `grad_v(LL)`, diagonal → both). Optimal LET coefficients are solved analytically via a 2×2 linear system (PURE divergence criterion) with Tikhonov regularisation for numerical stability in flat regions. The shape parameter t is set adaptively per image from the estimated noise floor. Outputs are clipped to `[0, 1]` and saved as float32 `.npy`. Usage: `python src/denoise_purelet_swt.py [--wavelet sym4] [--n_levels 4]`. |
+| `src/vst_math.py` | Shared VST utilities (Extension 2). Centralises the forward Anscombe transform (`anscombe`) and the exact unbiased inverse (`anscombe_inverse_exact`, Makitalo & Foi 2013) used by both the classical BM3D pipeline and the PnP denoiser. Also provides to_counts / from_counts helpers for converting between normalised float images and photon counts. Imported by `denoise_bm3d_vst.py`, `data_prep_train.py`, and `pnp_solver.py` to guarantee mathematical consistency across the pipeline. |
+|`src/data_prep_train.py` | Training-pair generator for the PnP denoiser (Extension 2). Reads clean images from `data/raw/train_cyto2/` (separate from the 68-image test set), extracts Red and Green channels independently, applies percentile normalisation then the Anscombe VST, and corrupts each channel with synthetic Gaussian noise sampled from Uniform(σ_min, σ_max) in the VST domain. Produces single-channel (`noisy_vst`, `clean_vst`) pairs as `.npy` arrays under `data/train_pairs/`, with a metadata CSV logging sigma and pscale per pair. Supports `--n_augments` (default 4) to generate multiple noise realisations per image. Must be run before `cellpose_trainer.py`. |
+| `src/cellpose_trainer.py` | Learned denoiser training script (Extension 2). Fine-tunes a single-channel Cellpose `DenoiseModel` on the VST-domain pairs produced by `data_prep_train.py`. Initialises from `denoise_cyto3` weights and trains with AdamW + MSE loss. Checkpoints are saved every 25 epochs under `models/pnp_denoiser/`; the final weights are consumed by `pnp_solver.py` as the denoiser prior in the PnP-HQS loop. Usage: `python src/cellpose_trainer.py`. |
+| `src/pnp_solver.py` | Plug-and-Play HQS solver (Extension 2). Implements the PnP-HQS algorithm for Poisson image restoration. Alternates between a closed-form Wiener-style data-fidelity step in the Anscombe VST domain (`z = (μ·v + y_vst) / (μ + 1)`) and a denoiser prior step via the trained CellposeDenoiserWrapper. The penalty parameter μ is annealed geometrically from `μ_0` to `μ_max` over `N_ITERS` (default 4) iterations. Red and Green channels are processed independently; the empty Blue channel is passed through unchanged. `CellposeDenoiserWrapper` pads inputs to multiples of 32 for the network and crops back after inference. |
+| `src/pipeline_main.py` | End-to-end PnP inference pipeline (Extension 2). Orchestrates the full denoise → segment → evaluate flow for the learned PnP-HQS method. Loads noisy images and pscale values, runs `pnp_hqs_denoise` from `pnp_solver.py`, segments the denoised output with the frozen `cyto2` model (`channels=[2, 1]`), and computes AP at IoU thresholds 0.5–0.95 against ground-truth masks. Writes a metrics CSV in the same schema as the classical method CSVs for direct comparison via bootstrap_ci.py and scatter_delta_plots.py. Supports `--single` mode for per-image debugging and configurable HQS hyperparameters (`--n_iters`, `--mu_0`, `--mu_max`, `--rho`). Usage: `python src/pipeline_main.py`. |
