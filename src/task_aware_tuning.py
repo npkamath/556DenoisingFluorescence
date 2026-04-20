@@ -444,9 +444,9 @@ def main():
         print("\n--grid-only: skipping final evaluation.")
         return
 
-    # ── Phase 2: Final evaluation on full test set ───────────────────────────
+    # ── Phase 2: Final evaluation on held-out test split only ───────────────
     print(f"\n{'=' * 60}")
-    print(f"  Final evaluation: all {len(all_stems)} images")
+    print(f"  Final evaluation: {len(test_stems)} held-out test images (val excluded)")
     print(f"{'=' * 60}")
 
     summary_rows = []
@@ -455,7 +455,7 @@ def main():
         result = evaluate_tuned(
             method_name=method_name,
             best_param=best_params[method_name],
-            all_stems=all_stems,
+            all_stems=test_stems,
             noisy_dict=noisy_dict,
             pscales=pscales,
             gt_dict=gt_dict,
