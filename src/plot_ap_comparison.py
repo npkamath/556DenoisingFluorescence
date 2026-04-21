@@ -19,6 +19,14 @@ from pathlib import Path
 
 AP_DIR  = Path("results/ap_scores")
 OUT_DIR = Path("figures/comparison")
+RUNTIME_SOURCES = {
+    "cellpose3":   (Path("results/runtimes/cellpose3_denoise.csv"), "time_s"),
+    "noise2void":  (Path("results/runtimes/noise2void.csv"),        "time_s"),
+    "purelet_swt": (Path("results/runtimes/purelet_swt.csv"),       "time_s"),
+    "wiener":      (Path("results/extension1/tuned_ap_scores/wiener_tuned_runtimes.csv"),     "denoise_time_s"),
+    "bm3d":        (Path("results/extension1/tuned_ap_scores/bm3d_tuned_runtimes.csv"),       "denoise_time_s"),
+    "poisson_tv":  (Path("results/extension1/tuned_ap_scores/poisson_tv_tuned_runtimes.csv"), "denoise_time_s"),
+}
 
 # Display names and color groups
 DISPLAY = {
@@ -98,6 +106,33 @@ def load_ap50(csv_path: Path) -> np.ndarray:
     return np.array(scores)
 
 
+def load_mean_runtime(method: str) -> float | None:
+    """Return mean per-image denoise time in seconds, or None if unavailable."""
+    if method not in RUNTIME_SOURCES:
+        return None
+    path, col = RUNTIME_SOURCES[method]
+    if not path.exists():
+        return None
+    times = []
+    with open(path) as f:
+        for row in csv.DictReader(f):
+            try:
+                times.append(float(row[col]))
+            except (KeyError, ValueError):
+                continue
+    return float(np.mean(times)) if times else None
+
+
+def fmt_runtime(t: float | None) -> str:
+    if t is None:
+        return "—"
+    if t >= 10:
+        return f"{t:.1f}s"
+    if t >= 1:
+        return f"{t:.2f}s"
+    return f"{t:.2f}s"
+
+
 def pretty_label(m: str) -> str:
     if m in DISPLAY:
         return DISPLAY[m]
@@ -124,6 +159,7 @@ def render_plot(method_scores: dict, out_path: Path, title: str,
     means = [scores[m].mean() for m in sorted_methods]
     labels = [pretty_label(m) for m in sorted_methods]
     colors = [CATEGORY_COLORS[category_for(m)] for m in sorted_methods]
+    runtimes = [load_mean_runtime(m) for m in sorted_methods]
     cats_present = sorted({category_for(m) for m in sorted_methods},
                           key=lambda c: ["baseline", "classical", "dl", "pnp"].index(c))
 
@@ -138,16 +174,19 @@ def render_plot(method_scores: dict, out_path: Path, title: str,
     bars = ax.barh(y_pos, means, color=colors, edgecolor="white",
                    linewidth=0.6, height=0.72, alpha=0.92)
 
-    for bar, mean in zip(bars, means):
+    for bar, mean, rt in zip(bars, means, runtimes):
         ax.text(bar.get_width() + 0.008, bar.get_y() + bar.get_height() / 2,
                 f"{mean:.4f}", ha="left", va="center", fontsize=10,
                 color="#333333")
+        ax.text(bar.get_width() + 0.11, bar.get_y() + bar.get_height() / 2,
+                fmt_runtime(rt), ha="left", va="center", fontsize=9,
+                color="#777777", style="italic")
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(labels, fontsize=11)
-    ax.set_xlabel("Mean AP@0.5", fontsize=11)
+    ax.set_xlabel("Mean AP@0.5   (italic: mean denoise time / image)", fontsize=10.5)
     ax.set_title(title, fontsize=12.5, pad=12, loc="left")
-    ax.set_xlim(0, min(1.0, max(means) + 0.14))
+    ax.set_xlim(0, min(1.0, max(means) + 0.26))
     ax.xaxis.set_major_locator(mticker.MultipleLocator(0.1))
     ax.xaxis.set_minor_locator(mticker.MultipleLocator(0.05))
     ax.grid(axis="x", which="major", linestyle="-", alpha=0.25, linewidth=0.6)

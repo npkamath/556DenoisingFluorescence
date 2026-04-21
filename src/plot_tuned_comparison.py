@@ -32,6 +32,12 @@ METHODS = {
     "bm3d":       "BM3D",
 }
 
+PARAM_SHORT = {
+    "mysize":    "size",
+    "weight":    "w",
+    "sigma_vst": "σ",
+}
+
 COLOR_UNTUNED = "#4c78a8"
 COLOR_TUNED   = "#f58518"
 
@@ -59,6 +65,29 @@ def load_test_stems(split_csv: Path) -> list[str]:
     return stems
 
 
+def load_best_params(csv_path: Path) -> dict[str, tuple[str, str, str]]:
+    """Return {method: (param_name, default_value, tuned_value)}."""
+    params = {}
+    if not csv_path.exists():
+        return params
+    with open(csv_path) as f:
+        for row in csv.DictReader(f):
+            params[row["method"]] = (
+                row["param_name"],
+                row["default_value"],
+                row["tuned_value"],
+            )
+    return params
+
+
+def _fmt_num(s: str) -> str:
+    try:
+        v = float(s)
+        return f"{v:g}"
+    except ValueError:
+        return s
+
+
 def main(ap_dir: Path, tuned_dir: Path, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -69,6 +98,8 @@ def main(ap_dir: Path, tuned_dir: Path, out_dir: Path) -> None:
 
     test_stems = set(load_test_stems(split_csv))
     print(f"Test split: {len(test_stems)} images")
+
+    best_params = load_best_params(tuned_dir / "best_params.csv")
 
     results = {}
     missing = []
@@ -108,42 +139,84 @@ def main(ap_dir: Path, tuned_dir: Path, out_dir: Path) -> None:
     # ── Plot ──────────────────────────────────────────────────────────────────
     n = len(results)
     x = np.arange(n)
-    width = 0.35
+    width = 0.36
 
-    fig, ax = plt.subplots(figsize=(max(8, n * 3.2), 5))
+    plt.rcParams.update({
+        "font.family":  "DejaVu Sans",
+        "axes.spines.top":   False,
+        "axes.spines.right": False,
+    })
 
-    labels_list  = [v[0] for v in results.values()]
+    fig, ax = plt.subplots(figsize=(max(7.5, n * 2.8), 5.2))
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("#fafafa")
+
+    labels_list   = [v[0] for v in results.values()]
     untuned_means = [v[1].mean() for v in results.values()]
     tuned_means   = [v[2].mean() for v in results.values()]
 
     bars_u = ax.bar(x - width/2, untuned_means, width,
                     color=COLOR_UNTUNED, label="Default params",
-                    edgecolor="white")
+                    edgecolor="white", linewidth=1.2, zorder=3)
     bars_t = ax.bar(x + width/2, tuned_means, width,
                     color=COLOR_TUNED, label="Task-tuned params",
-                    edgecolor="white")
+                    edgecolor="white", linewidth=1.2, zorder=3)
 
-    # Annotate with delta
+    # Value labels on top of each bar
+    for xi, v in zip(x - width/2, untuned_means):
+        ax.text(xi, v + 0.006, f"{v:.3f}", ha="center", va="bottom",
+                fontsize=8.5, color="#333", zorder=4)
+    for xi, v in zip(x + width/2, tuned_means):
+        ax.text(xi, v + 0.006, f"{v:.3f}", ha="center", va="bottom",
+                fontsize=8.5, color="#333", zorder=4)
+
+    # Delta badge centered above each pair
+    all_means = untuned_means + tuned_means
+    ymax = max(all_means)
+    badge_y = ymax + 0.045
     for i, (um, tm) in enumerate(zip(untuned_means, tuned_means)):
         delta = tm - um
-        sign = "+" if delta >= 0 else ""
-        ax.text(x[i] + width/2, tm + 0.008,
-                f"{sign}{delta:.3f}", ha="center", va="bottom",
-                fontsize=9, color=COLOR_TUNED, fontweight="bold")
+        sign = "+" if delta >= 0 else "−"
+        color = "#2a9d4a" if delta >= 0 else "#c0392b"
+        ax.text(x[i], badge_y, f"Δ {sign}{abs(delta):.3f}",
+                ha="center", va="center", fontsize=9.5,
+                fontweight="bold", color=color,
+                bbox=dict(boxstyle="round,pad=0.3",
+                          fc="white", ec=color, lw=1.0),
+                zorder=5)
+
+    # X-tick labels with default → tuned param annotations
+    tick_labels = []
+    for method, (label, _, _) in results.items():
+        tick = label
+        if method in best_params:
+            pname, dv, tv = best_params[method]
+            short = PARAM_SHORT.get(pname, pname)
+            tick = f"{label}\n{short}: {_fmt_num(dv)} → {_fmt_num(tv)}"
+        tick_labels.append(tick)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels_list, fontsize=11)
-    ax.set_ylabel("Mean AP@0.5", fontsize=11)
-    ax.set_title("Default vs Task-Tuned Hyperparameters — AP@0.5 (53 held-out images)", fontsize=11)
-    all_means = untuned_means + tuned_means
-    ax.set_ylim(0, min(1.05, max(all_means) + 0.08))
-    ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.05))
-    ax.grid(axis="y", linestyle="--", alpha=0.4)
-    ax.legend(fontsize=10)
+    ax.set_xticklabels(tick_labels, fontsize=10.5)
+    ax.set_ylabel("Mean AP@0.5", fontsize=11.5, labelpad=8)
+    ax.set_title("Default vs Task-Tuned Hyperparameters",
+                 fontsize=13, fontweight="bold", pad=16, loc="left")
+    ax.text(0, 1.02, "AP@0.5 across 53 held-out test images",
+            transform=ax.transAxes, fontsize=10, color="#666")
+
+    ax.set_ylim(0, min(1.05, ymax + 0.18))
+    ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+    ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+    ax.grid(axis="y", which="major", linestyle="-",  alpha=0.25, zorder=0)
+    ax.grid(axis="y", which="minor", linestyle=":",  alpha=0.15, zorder=0)
+    ax.tick_params(axis="y", labelsize=10)
+    ax.tick_params(axis="x", length=0)
+
+    ax.legend(fontsize=10, frameon=False, loc="lower center",
+              bbox_to_anchor=(0.5, -0.22), ncol=2, handlelength=1.5)
 
     plt.tight_layout()
     out_path = out_dir / "tuned_comparison.png"
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=180, facecolor="white")
     plt.close(fig)
     print(f"Saved: {out_path}")
 
