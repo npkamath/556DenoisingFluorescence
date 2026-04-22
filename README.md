@@ -125,6 +125,43 @@ python src/pipeline/evaluate.py --pred_dir results/pred_masks/noisy --method_nam
 
 ---
 
+## File Structure Overview
+
+**Data preparation** — `src/data_prep/`
+- `data_prep.py` — Generate clean/noisy/masks `.npy` from raw PNGs (Poisson and cellpose3 noise variants); logs per-image `pscale` to CSV.
+- `data_prep_train.py` — Generate VST-domain (noisy, clean) training pairs from the cyto2 set for the learned PnP denoiser (Extension 2).
+- `visualize_data_prep.py` — Sanity-check plots of the generated noise and baseline AP scores.
+
+**Shared utilities** — `src/`
+- `vst_math.py` — Anscombe forward + exact-unbiased inverse VST; imported by `denoise_bm3d_vst`, `data_prep_train`, and `pnp_solver`.
+
+**Classical denoisers** — `src/denoisers/classical/`
+- `denoise_wiener_vst.py` — VST + local Wiener filter.
+- `denoise_bm3d_vst.py` — VST + BM3D.
+- `denoise_poisson_tv.py` — VST + ROF-TV (Chambolle).
+- `denoise_purelet_swt.py` — PURE-LET via stationary wavelet transform (Poisson-aware, interscale thresholding).
+
+**Learned denoisers** — `src/denoisers/learned/`
+- `cellpose3_denoise.py` — Cellpose3 self-supervised baseline (`denoise_cyto3` weights).
+- `noise2void.py` — Noise2Void blind self-supervised per-image baseline.
+- `cellpose_trainer.py` — Fine-tune a single-channel Cellpose `DenoiseModel` on VST-domain pairs (Extension 2 training).
+- `pnp_solver.py` — Plug-and-Play HQS solver; alternates a VST-domain Wiener data step with the learned denoiser prior.
+
+**Pipeline** — `src/pipeline/`
+- `segment.py` — Segment `.npy` images with the frozen Cellpose `cyto2` model (`channels=[2, 1]`).
+- `evaluate.py` — Compute per-image AP@0.5 (and AP at IoU 0.5–0.95) against ground-truth masks.
+- `pipeline_main.py` — End-to-end denoise → segment → evaluate driver for PnP-HQS (Extension 2).
+- `task_aware_tuning.py` — Grid-search classical denoiser hyperparameters to maximize AP@0.5 on a held-out validation split (Extension 1).
+
+**Analysis** — `src/analysis/`
+- `bootstrap_ci.py` — Paired bootstrap 95% CI and one-sided p-value for ΔAP@0.5 between methods.
+- `freq_residual_analysis.py` — Radial PSD, 2D spectrum, and band-power analysis of (denoised − clean) residuals.
+- `scatter_delta_plots.py` — Per-image method-vs-baseline scatter and sorted ΔAP@0.5 bar plots.
+- `plot_ap_comparison.py`, `plot_tuned_comparison.py`, `boxplot_ap_distributions.py` — Bar/box summaries of mean or per-image AP@0.5 across methods (reads `results/ap_scores/`).
+- `time_denoisers.py` — Per-image runtime benchmark across all implemented denoisers.
+
+---
+
 ## Classical Denoisers 
 
 These two baselines apply **Anscombe VST** to convert Poisson counts into an approximately Gaussian (unit-variance) domain, run a Gaussian-assumption denoiser, then apply a **numerically-safe inverse VST** back to the original intensity range.
