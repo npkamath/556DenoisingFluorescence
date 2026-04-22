@@ -125,9 +125,59 @@ python src/evaluate.py --pred_dir results/pred_masks/noisy --method_name noisy
 
 ---
 
+## Classical Denoisers 
+
+These two baselines apply **Anscombe VST** to convert Poisson counts into an approximately Gaussian (unit-variance) domain, run a Gaussian-assumption denoiser, then apply a **numerically-safe inverse VST** back to the original intensity range.
+
+**Channel convention:** ch0 = Red (nucleus), ch1 = Green (cytoplasm), ch2 = Blue (empty).  
+**Policy:** denoise Red/Green only; keep Blue unchanged to avoid degeneracies on an (almost) constant channel.
+
+### 1) Poisson-TV (VST + ROF-TV via Chambolle)
+
+- Script: `src/denoise_poisson_tv.py`
+- Idea: in VST domain, solve a TV-regularized denoising problem (edge-preserving smoothing).
+- Dependency: `scikit-image` (for `denoise_tv_chambolle`)
+
+Run:
+```bash
+# Denoise (Poisson-only noise)
+python src/denoise_poisson_tv.py --weight 0.10 --n_iter 200
+```
+
+Notes:
+
+* --weight controls smoothness strength in the VST domain (larger = smoother).
+* Implementation normalizes each channel to [0,1] inside the VST domain for stability, then maps back.
+
+
+
+### 2) Wiener filter (VST + local Wiener smoothing)
+
+* Script: src/denoise_wiener_vst.py
+* Idea: local adaptive smoothing using neighborhood statistics (fast classical baseline).
+* Dependency: scipy (for Wiener filtering)
+```bash
+# Denoise (Poisson-only noise)
+python src/denoise_wiener_vst.py --mysize 5
+
+# Segment + evaluate (frozen cyto2)
+python src/segment.py --input_dir results/denoised/wiener --output_dir results/pred_masks/wiener --no_gpu
+python src/evaluate.py --pred_dir results/pred_masks/wiener --method_name wiener
+```
+Notes:
+
+* --mysize is the square window size (odd integer). Smaller windows preserve edges more but denoise less.
+* Same safe inverse VST + clipping is applied to guarantee finite outputs in [0,1].
+
+
+
+
+
+## Segment + evaluate (frozen cyto2)
+python src/segment.py --input_dir results/denoised/poisson_tv --output_dir results/pred_masks/poisson_tv --no_gpu
+python src/evaluate.py --pred_dir results/pred_masks/poisson_tv --method_name poisson_tv
 
 ## Extension 2: Learned PnP Denoiser
-
 Extension 2 replaces BM3D's hand-crafted prior with a neural denoiser trained
 in the Anscombe VST domain and plugged into the same HQS framework.
 
