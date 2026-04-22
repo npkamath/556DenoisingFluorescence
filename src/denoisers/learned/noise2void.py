@@ -18,9 +18,9 @@ so the network cannot use it, forcing it to predict the clean value from
 surrounding pixels. At inference time, no masking is applied.
 
 Usage:
-    python src/baselines/noise2void.py
-    python src/baselines/noise2void.py --noisy_dir data/noisy/cellpose3
-    python src/baselines/noise2void.py --epochs 50  # faster test run
+    python src/denoisers/learned/noise2void.py
+    python src/denoisers/learned/noise2void.py --noisy_dir data/noisy/cellpose3
+    python src/denoisers/learned/noise2void.py --epochs 50  # faster test run
 """
 
 import argparse

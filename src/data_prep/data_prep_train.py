@@ -35,17 +35,20 @@ Output:
     data/train_noise_params.csv            pair, clean_stem, sigma, pscale
 
 Usage:
-    python src/data_prep_train.py
-    python src/data_prep_train.py --sigma_min 0.5 --sigma_max 2.0 --n_augments 4
-    python src/data_prep_train.py --raw_dir data/raw/train_cyto2 --seed 0
+    python src/data_prep/data_prep_train.py
+    python src/data_prep/data_prep_train.py --sigma_min 0.5 --sigma_max 2.0 --n_augments 4
+    python src/data_prep/data_prep_train.py --raw_dir data/raw/train_cyto2 --seed 0
 """
 
 import argparse
 import csv
+import sys
 import numpy as np
 import imageio.v3 as iio
 import torch
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from cellpose.denoise import img_norm
 from vst_math import anscombe, to_counts

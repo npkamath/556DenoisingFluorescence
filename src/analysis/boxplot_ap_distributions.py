@@ -13,8 +13,8 @@ annotated alongside σ. A jittered strip of per-image points is overlaid
 to make distribution shape visible.
 
 Usage:
-    python src/boxplot_ap_distributions.py
-    python src/boxplot_ap_distributions.py --methods noisy bm3d cellpose3 \
+    python src/analysis/boxplot_ap_distributions.py
+    python src/analysis/boxplot_ap_distributions.py --methods noisy bm3d cellpose3 \
         pnp_hqs_epoch25 pnp_hqs_epoch50 pnp_hqs_epoch75 clean
 """
 

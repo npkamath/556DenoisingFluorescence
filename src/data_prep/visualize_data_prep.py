@@ -9,7 +9,7 @@ Produces five figures under figures/data_prep/:
   5. intensity_histograms.png — Pixel intensity distributions before/after noise
 
 Usage:
-    python src/visualize_data_prep.py
+    python src/data_prep/visualize_data_prep.py
 """
 
 import csv

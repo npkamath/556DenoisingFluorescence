@@ -16,9 +16,9 @@ Pipeline per grid point:
   denoise validation images -> segment (frozen cyto2) -> compute AP@0.5
 
 Usage:
-    python src/task_aware_tuning.py                     # full pipeline
-    python src/task_aware_tuning.py --grid-only          # grid search only
-    python src/task_aware_tuning.py --skip-grid \\
+    python src/pipeline/task_aware_tuning.py                     # full pipeline
+    python src/pipeline/task_aware_tuning.py --grid-only          # grid search only
+    python src/pipeline/task_aware_tuning.py --skip-grid \\
         --tv-weight 0.06 --bm3d-sigma 0.8 --wiener-size 7
 
 Output:
@@ -40,11 +40,10 @@ from pathlib import Path
 
 import numpy as np
 
-# Import denoise functions from project modules
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from denoise_poisson_tv import denoise_one_image as _tv_denoise
-from denoise_bm3d_vst import denoise_one_image as _bm3d_denoise
-from denoise_wiener_vst import denoise_one_image as _wiener_denoise
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from denoisers.classical.denoise_poisson_tv import denoise_one_image as _tv_denoise
+from denoisers.classical.denoise_bm3d_vst    import denoise_one_image as _bm3d_denoise
+from denoisers.classical.denoise_wiener_vst  import denoise_one_image as _wiener_denoise
 
 from cellpose.models import CellposeModel
 from cellpose.metrics import average_precision

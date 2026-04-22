@@ -10,8 +10,8 @@ for a fair comparison. Untuned scores are filtered to the test split using
 results/extension1/validation_split.csv.
 
 Usage:
-    python src/plot_tuned_comparison.py
-    python src/plot_tuned_comparison.py --ap_dir results/ap_scores \
+    python src/analysis/plot_tuned_comparison.py
+    python src/analysis/plot_tuned_comparison.py --ap_dir results/ap_scores \
         --tuned_dir results/extension1 --out_dir figures/comparison
 """
 

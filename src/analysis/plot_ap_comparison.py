@@ -6,8 +6,8 @@ Reads per-image AP CSVs from results/ap_scores/ and plots mean AP@0.5
 with ±1 std error bars. Methods are sorted by mean AP@0.5.
 
 Usage:
-    python src/plot_ap_comparison.py
-    python src/plot_ap_comparison.py --ap_dir results/ap_scores --out_dir figures/comparison
+    python src/analysis/plot_ap_comparison.py
+    python src/analysis/plot_ap_comparison.py --ap_dir results/ap_scores --out_dir figures/comparison
 """
 
 import argparse

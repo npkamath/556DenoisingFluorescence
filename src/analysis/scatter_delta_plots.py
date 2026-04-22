@@ -1,5 +1,5 @@
 """
-src/scatter_delta_plots.py
+src/analysis/scatter_delta_plots.py
 ---------------------------
 Per-image scatter plots and Δ (delta) plots comparing each denoising method
 against the noisy baseline and against Cellpose3.
@@ -31,16 +31,16 @@ Reads:
 Usage
 -----
     # All methods found automatically:
-    python src/scatter_delta_plots.py
+    python src/analysis/scatter_delta_plots.py
 
     # Specific methods:
-    python src/scatter_delta_plots.py --methods bm3d wiener tv purelet cellpose3
+    python src/analysis/scatter_delta_plots.py --methods bm3d wiener tv purelet cellpose3
 
     # Change baseline (default: noisy_poisson):
-    python src/scatter_delta_plots.py --baseline noisy_poisson
+    python src/analysis/scatter_delta_plots.py --baseline noisy_poisson
 
     # Also compare against cellpose3:
-    python src/scatter_delta_plots.py --vs_cellpose3
+    python src/analysis/scatter_delta_plots.py --vs_cellpose3
 
 Output
 ------

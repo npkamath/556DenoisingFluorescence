@@ -45,9 +45,13 @@ Usage (imported by pipeline_main.py):
     denoised = pnp_hqs_denoise(noisy, pscale, denoiser)
 """
 
+import sys
 import numpy as np
 import torch
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from cellpose.denoise import DenoiseModel
 from vst_math import anscombe, anscombe_inverse_exact
 

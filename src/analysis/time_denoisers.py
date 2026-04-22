@@ -14,8 +14,8 @@ Methods timed:
   - Cellpose3 (pretrained denoising network)
 
 Usage:
-    python src/time_denoisers.py
-    python src/time_denoisers.py --noisy_dir data/noisy/poisson --methods wiener bm3d
+    python src/analysis/time_denoisers.py
+    python src/analysis/time_denoisers.py --noisy_dir data/noisy/poisson --methods wiener bm3d
 """
 
 import argparse

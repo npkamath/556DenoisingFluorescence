@@ -1,5 +1,5 @@
 """
-src/bootstrap_ci.py
+src/analysis/bootstrap_ci.py
 --------------------
 Paired bootstrap confidence intervals for mean AP@0.5 differences.
 
@@ -14,13 +14,13 @@ described in the proposal's Evaluation Protocol section.
 Usage
 -----
     # Noisy vs Cellpose3 (the P3 demo pair):
-    python src/bootstrap_ci.py --baseline noisy --method cellpose3
+    python src/analysis/bootstrap_ci.py --baseline noisy --method cellpose3
 
     # All classical methods vs noisy in one call:
-    python src/bootstrap_ci.py --baseline noisy --method wiener tv bm3d purelet
+    python src/analysis/bootstrap_ci.py --baseline noisy --method wiener tv bm3d purelet
 
     # Custom AP score directory:
-    python src/bootstrap_ci.py --baseline noisy --method cellpose3 \
+    python src/analysis/bootstrap_ci.py --baseline noisy --method cellpose3 \
         --ap_dir results/ap_scores --out_dir results/bootstrap
 
 Input CSV format (from evaluate.py):

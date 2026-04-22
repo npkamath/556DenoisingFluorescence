@@ -44,18 +44,23 @@ Outputs (default paths):
 import argparse
 import csv
 import json
+import sys
 import numpy as np
 import torch
 from pathlib import Path
 from typing import Optional
 import imageio.v3 as iio
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from cellpose import models as cp_models
 from cellpose.metrics import average_precision
 
-from pnp_solver import CellposeDenoiserWrapper, pnp_hqs_denoise, N_ITERS, MU_0, MU_MAX, RHO
-from segment import run_cellpose
-from evaluate import compute_ap as evaluate_compute_ap, IOU_THRESHOLDS
+from denoisers.learned.pnp_solver import (
+    CellposeDenoiserWrapper, pnp_hqs_denoise, N_ITERS, MU_0, MU_MAX, RHO,
+)
+from pipeline.segment import run_cellpose
+from pipeline.evaluate import compute_ap as evaluate_compute_ap, IOU_THRESHOLDS
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 NOISY_DIR_DEFAULT    = Path("data/noisy/poisson")

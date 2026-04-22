@@ -33,9 +33,9 @@ Noise scale (pscale) is sampled per-image from Gamma(alpha=4, beta=0.7), clipped
 to min 1. Mean pscale ~5.7. The SAME pscale is used for both noise modes.
 
 Usage:
-    python src/data_prep.py                       # generate both noise types
-    python src/data_prep.py --noise_mode poisson   # Poisson-only
-    python src/data_prep.py --noise_mode cellpose3 # cellpose3 noise only
+    python src/data_prep/data_prep.py                       # generate both noise types
+    python src/data_prep/data_prep.py --noise_mode poisson   # Poisson-only
+    python src/data_prep/data_prep.py --noise_mode cellpose3 # cellpose3 noise only
 
 Output files are named by their original index (e.g., 000.npy, 001.npy, ...).
 """

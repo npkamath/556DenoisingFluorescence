@@ -21,13 +21,13 @@ So we use channels=[2, 1]: cytoplasm=Green(2), nucleus=Red(1).
 
 Usage:
     # Segment noisy images (default)
-    python src/segment.py
+    python src/pipeline/segment.py
 
     # Segment denoised images from a specific method
-    python src/segment.py --input_dir results/denoised/wiener --output_dir results/pred_masks/wiener
+    python src/pipeline/segment.py --input_dir results/denoised/wiener --output_dir results/pred_masks/wiener
 
     # Segment clean images (upper bound)
-    python src/segment.py --input_dir data/clean --output_dir results/pred_masks/clean
+    python src/pipeline/segment.py --input_dir data/clean --output_dir results/pred_masks/clean
 """
 
 import argparse

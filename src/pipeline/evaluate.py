@@ -14,13 +14,13 @@ AP@0.5 definition (matching Cellpose3 paper):
 
 Usage:
     # Evaluate noisy baseline
-    python src/evaluate.py
+    python src/pipeline/evaluate.py
 
     # Evaluate a specific method
-    python src/evaluate.py --pred_dir results/pred_masks/wiener --method_name wiener
+    python src/pipeline/evaluate.py --pred_dir results/pred_masks/wiener --method_name wiener
 
     # Evaluate all methods in results/pred_masks/
-    python src/evaluate.py --all
+    python src/pipeline/evaluate.py --all
 """
 
 import argparse

@@ -14,9 +14,9 @@ Channel convention:
   Cellpose channels=[2, 1] means cytoplasm=Green(ch1), nucleus=Red(ch0).
 
 Usage:
-    python src/baselines/cellpose3_denoise.py
-    python src/baselines/cellpose3_denoise.py --noisy_dir data/noisy/cellpose3
-    python src/baselines/cellpose3_denoise.py --noisy_dir data/noisy/poisson
+    python src/denoisers/learned/cellpose3_denoise.py
+    python src/denoisers/learned/cellpose3_denoise.py --noisy_dir data/noisy/cellpose3
+    python src/denoisers/learned/cellpose3_denoise.py --noisy_dir data/noisy/poisson
 """
 
 import argparse

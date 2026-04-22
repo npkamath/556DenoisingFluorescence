@@ -1,5 +1,5 @@
 """
-src/freq_residual_analysis.py
+src/analysis/freq_residual_analysis.py
 ------------------------------
 Frequency-domain residual analysis for denoising methods.
 
@@ -56,13 +56,13 @@ Notes:
 Usage
 -----
     # All methods found automatically under results/denoised/:
-    python src/freq_residual_analysis.py
+    python src/analysis/freq_residual_analysis.py
 
     # Specific methods:
-    python src/freq_residual_analysis.py --methods bm3d wiener tv purelet
+    python src/analysis/freq_residual_analysis.py --methods bm3d wiener tv purelet
 
     # Also include the raw noisy residual as a reference method:
-    python src/freq_residual_analysis.py --include_noisy
+    python src/analysis/freq_residual_analysis.py --include_noisy
 
 Output
 ------

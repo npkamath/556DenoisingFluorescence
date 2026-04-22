@@ -21,12 +21,12 @@ Training loop:
     Final weights saved to <model_dir>/<model_name>_final.pth.
 
 Prerequisites:
-    python src/data_prep_train.py   # generates data/train_pairs/
+    python src/data_prep/data_prep_train.py   # generates data/train_pairs/
 
 Usage:
-    python src/cellpose_trainer.py
-    python src/cellpose_trainer.py --n_epochs 200 --learning_rate 5e-5
-    python src/cellpose_trainer.py --pretrained models/pnp_denoiser/cellpose_vst_denoiser.pth
+    python src/denoisers/learned/cellpose_trainer.py
+    python src/denoisers/learned/cellpose_trainer.py --n_epochs 200 --learning_rate 5e-5
+    python src/denoisers/learned/cellpose_trainer.py --pretrained models/pnp_denoiser/cellpose_vst_denoiser.pth
 
 Outputs:
     models/pnp_denoiser/cellpose_vst_denoiser_epoch25.pth   (checkpoint)
