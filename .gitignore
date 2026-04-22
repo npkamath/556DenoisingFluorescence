@@ -1,10 +1,17 @@
 # Project docs (local only)
 CLAUDE.md
 specifications.md
+report/
 
 # Data and results
 data/
 results/
+
+# Cellpose model downloads (cached in CWD)
+cyto2torch_0
+denoise_cyto3
+denoise_nuclei
+size_cytotorch_0.npy
 
 # Python
 __pycache__/
