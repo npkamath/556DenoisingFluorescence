@@ -30,7 +30,7 @@ Go to https://www.cellpose.org/dataset and download the following:
 | Zip | Contents | Purpose |
 |-----|----------|---------|
 | `test.zip` | 68 images + masks | **Required** — main evaluation set |
-| `cyto2` (181 MB) | 256 images + masks | Optional — used for hyperparameter tuning (Extension 1) |
+| `cyto2` (181 MB) | 256 images + masks | Optional — used for hyperparameter tuning (Extensions) |
 
 > `train.zip` is not needed.
 
@@ -170,6 +170,28 @@ Notes:
 * Same safe inverse VST + clipping is applied to guarantee finite outputs in [0,1].
 
 
+
+### 3) PURE-LET (VST + SWT + Stein's Unbiased Risk Estimator)
+
+- Script: `src/denoise_purelet_swt.py`
+- Idea: decomposes each channel with an undecimated (shift-invariant) SWT, then analytically solves for the optimal linear combination of threshold basis functions using Stein's unbiased Poisson risk estimate — no manual threshold tuning needed.
+- Dependency: `pywt` (PyWavelets)
+
+Run:
+```bash
+# Denoise (Poisson-only noise)
+python src/denoise_purelet_swt.py --wavelet sym4 --n_levels 4
+
+# Segment + evaluate (frozen cyto2)
+python src/segment.py --input_dir results/denoised/purelet_swt --output_dir results/pred_masks/purelet_swt --no_gpu
+python src/evaluate.py --pred_dir results/pred_masks/purelet_swt --method_name purelet_swt
+```
+
+Notes:
+
+* `--wavelet` sets the mother wavelet (default `sym4`; `db4` and `bior2.2` are reasonable alternatives).
+* `--n_levels` controls the decomposition depth (default 4). More levels capture lower-frequency structure but increase runtime.
+* SWT avoids the ringing and shift-sensitivity artifacts of standard DWT; no cycle-spinning is needed.
 
 
 
